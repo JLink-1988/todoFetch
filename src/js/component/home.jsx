@@ -1,77 +1,124 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 //include images into your bundle
-import rigoImage from "../../img/rigo-baby.jpg";
+import React, { useEffect, useState } from "react";
+
+//include images into your bundle
 
 //create your first component
 const Home = () => {
-	const [item, setItem] = useState("");
-	const [todoList, setTodolist] = useState([]);
-	console.log(todoList);
-
+	const [listname, setListName] = useState("");
+	const [todolist, setTodoList] = useState([]);
 	const getTodos = () => {
 		fetch("https://assets.breatheco.de/apis/fake/todos/user/Yasmany")
-			.then((res) => res.text())
-			.then((result) => setTodolist(result))
+			.then((response) => response.json())
+			.then((result) => setTodoList(result))
 			.catch((error) => console.log("error", error));
 	};
-	const addTodo = () => {
-		if (item.length > 0) {
-			setTodolist([...todoList, item]);
-			setItem("");
-		}
+	const addTodo = (item) => {
+		var myHeaders = new Headers();
+		myHeaders.append("Content-Type", "application/json");
+
+		var raw = JSON.stringify([...todolist, { label: item, done: false }]);
+
+		var requestOptions = {
+			method: "PUT",
+			headers: myHeaders,
+			body: raw,
+			redirect: "follow",
+		};
+
+		fetch(
+			"https://assets.breatheco.de/apis/fake/todos/user/Yasmany",
+			requestOptions
+		)
+			.then((response) => (response.status === 200 ? getTodos() : ""))
+			.catch((error) => console.log("error", error));
 	};
-	const editTodo = () => {
-		
+	const deleteTodo = (newList) => {
+		var myHeaders = new Headers();
+		myHeaders.append("Content-Type", "application/json");
+
+		var raw = JSON.stringify(newList);
+
+		var requestOptions = {
+			method: "PUT",
+			headers: myHeaders,
+			body: raw,
+			redirect: "follow",
+		};
+
+		fetch(
+			"https://assets.breatheco.de/apis/fake/todos/user/Yasmany",
+			requestOptions
+		)
+			.then((response) =>
+				response.status === 200 ? setTodoList(newList) : ""
+			)
+			.catch((error) => console.log("error", error));
 	};
-	const deleteTodo = () => {};
 	const completeTodo = () => {};
-	const addUser = () => {};
-	const deleteUser = () => {};
-	const handleChange = (event) => {
-		setItem(event.target.value);
-	};
+
 	useEffect(() => {
 		getTodos();
 	}, []);
+	console.log(todolist);
 
 	return (
-		<div className="container">
-			<div>TODO LIST</div>
-			<div className="input-group">
-				<input
-					type="text"
-					className="form-control"
-					placeholder="Add a task"
-					onChange={handleChange}
-					value={item}
-				/>
-				<button
-					className="btn btn-outline-secondary"
-					type="button"
-					onClick={addTodo}>
-					Button
-				</button>
-			</div>
-			<ul>
-				{ todoList.map((task, index) => {
-					return (
-						<li key={index}>
-							{task.label}
-							<div
-								className="d-flex justify-content"
-								onClick={() => {
-									setTodolist(
-										todoList.filter((el, i) => i !== index)
-									);
-								}}>
-								❌
-							</div>
-						</li>
-					);
-				}) }
-			</ul>
-		</div>
+		<>
+			<main>
+				<h1> Todos</h1>
+				<div className="input-group">
+					<input
+						type="text"
+						className="form-control"
+						placeholder="Todo-list"
+						onChange={(event) => {
+							setListName(event.target.value);
+						}}
+						value={listname}
+						onKeyUp={(e) => {
+							if (e.key == "Enter" && listname !== "") {
+								addTodo(listname);
+								setListName("");
+							}
+						}}
+					/>
+					<button
+						onClick={() => {
+							//check is input is empty
+							if (listname !== "") {
+								addTodo(listname);
+								setListName("");
+							}
+						}}
+						className="btn btn-outline-secondary"
+						type="button">
+						Add task
+					</button>
+				</div>
+				<ul>
+					{todolist.map((item, index) => {
+						return (
+							<li className="newtodos" key={index}>
+								{item.label}
+								<button
+									onClick={() =>
+										deleteTodo(
+											todolist.filter((item, i) => {
+												return index !== i;
+											})
+										)
+									}>
+									X
+								</button>
+							</li>
+						);
+					})}
+				</ul>
+			</main>
+			<span>{todolist.length} item left</span>
+		</>
 	);
 };
 
